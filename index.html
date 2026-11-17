@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Processing Explorer | מעבדה אינטראקטיבית לאותות ומערכות</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Heebo', 'Assistant', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.14);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+        }
+        .tab-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(79, 70, 229, 0.25));
+            border-color: #22d3ee;
+            color: #67e8f9;
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.2);
+        }
+        canvas {
+            touch-action: none;
+            display: block;
+        }
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #1e293b;
+            height: 6px;
+            border-radius: 999px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #22d3ee;
+            cursor: pointer;
+            border: 2px solid #0f172a;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+        }
+        input[type="range"].amber-slider::-webkit-slider-thumb {
+            background: #fbbf24;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+        }
+        input[type="range"].indigo-slider::-webkit-slider-thumb {
+            background: #818cf8;
+            box-shadow: 0 0 10px rgba(129, 140, 248, 0.6);
+        }
+        .ltr-math {
+            direction: ltr;
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: floatSlow 5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- ========================================================= -->
+    <!-- LANDING PAGE / WELCOME VIEW                               -->
+    <!-- ========================================================= -->
+    <div id="landingPage" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 py-12 bg-[#070b14]">
+        <!-- Subtle Mathematical Grid & Glowing Backdrop -->
+        <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:28px_28px] opacity-40 pointer-events-none"></div>
+        <div class="absolute -top-32 -right-32 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Decorative Animated Sine Wave SVG -->
+        <svg class="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-64 opacity-15 pointer-events-none" viewBox="0 0 1200 200" fill="none" preserveAspectRatio="none">
+            <path d="M0 100 Q 75 10, 150 100 T 300 100 T 450 100 T 600 100 T 750 100 T 900 100 T 1050 100 T 1200 100" stroke="url(#waveGrad)" stroke-width="3" fill="none"/>
+            <defs>
+                <linearGradient id="waveGrad" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#22d3ee"/>
+                    <stop offset="50%" stop-color="#818cf8"/>
+                    <stop offset="100%" stop-color="#34d399"/>
+                </linearGradient>
+            </defs>
+        </svg>
+
+        <!-- Center Hero Card -->
+        <div class="relative z-10 max-w-3xl w-full glass-card rounded-3xl p-7 sm:p-12 text-center border border-cyan-500/20 shadow-2xl">
+            <!-- Logos Header: Signals & Systems + Technion -->
+            <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-8">
+                <!-- 1. Signals & Systems Clean Vector Logo -->
+                <div class="flex items-center gap-3.5 bg-slate-900/90 border border-slate-800 px-4 py-2.5 rounded-2xl shadow-lg animate-float">
+                    <svg dir="ltr" class="w-11 h-11 shrink-0" viewBox="0 0 64 64" fill="none">
+                        <rect width="64" height="64" rx="14" fill="url(#sigCleanBg)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1.5"/>
+                        <!-- Subtle baseline -->
+                        <line x1="8" y1="36" x2="56" y2="36" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1"/>
+                        <!-- Smooth Time-Domain Sinc/Wave (Left) -->
+                        <path d="M9 36 C 12 36, 13 31, 15 31 C 17 31, 18 42, 20 42 C 22 42, 24 18, 27 18 C 30 18, 32 45, 34 45 C 35.5 45, 36.5 36, 38 36" stroke="url(#timeWaveStroke)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- Clean Frequency-Domain Spectral Impulses (Right) -->
+                        <line x1="43" y1="44" x2="43" y2="27" stroke="#818cf8" stroke-width="2.4" stroke-linecap="round"/>
+                        <circle cx="43" cy="25" r="2" fill="#818cf8"/>
+                        <line x1="49" y1="44" x2="49" y2="17" stroke="#22d3ee" stroke-width="2.6" stroke-linecap="round"/>
+                        <circle cx="49" cy="15" r="2.3" fill="#22d3ee"/>
+                        <line x1="55" y1="44" x2="55" y2="27" stroke="#818cf8" stroke-width="2.4" stroke-linecap="round"/>
+                        <circle cx="55" cy="25" r="2" fill="#818cf8"/>
+                        <defs>
+                            <linearGradient id="sigCleanBg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#0b1221"/>
+                                <stop offset="100%" stop-color="#171e36"/>
+                            </linearGradient>
+                            <linearGradient id="timeWaveStroke" x1="9" y1="36" x2="38" y2="36" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#38bdf8"/>
+                                <stop offset="100%" stop-color="#22d3ee"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="text-right">
+                        <div class="text-sm font-extrabold text-cyan-300 tracking-wide">אותות ומערכות</div>
+                        <div class="text-[11px] text-slate-400">מעבדת זמן ותדר</div>
+                    </div>
+                </div>
+
+                <!-- 2. Technion Clean Modern 'T' Badge -->
+                <div class="flex items-center gap-3.5 bg-slate-900/90 border border-slate-800 px-4 py-2.5 rounded-2xl shadow-lg animate-float" style="animation-delay: 0.6s;">
+                    <div dir="ltr" class="w-11 h-11 shrink-0 rounded-[14px] bg-gradient-to-br from-[#0c2d57] to-[#081d3a] border border-sky-400/25 flex items-center justify-center shadow-inner">
+                        <span class="font-sans font-black text-2xl text-white tracking-tighter select-none">T</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-extrabold text-white tracking-wide">הטכניון</div>
+                        <div class="text-[11px] text-sky-300">מכון טכנולוגי לישראל</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course / Personal Tag -->
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-950/80 border border-cyan-700/50 text-cyan-300 text-xs font-semibold mb-5">
+                <span>✨</span>
+                <span>פרויקט אישי • כלי AI גנרטיביים • חורף 2026</span>
+            </div>
+
+            <!-- Main Personal Heading -->
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight bg-gradient-to-l from-white via-cyan-200 to-indigo-300 bg-clip-text text-transparent mb-4">
+                האתר שלי לחזרה על אותות ומערכות
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
+                מרחב אינטראקטיבי להבנה ויזואלית של התמרות פורייה, דגימה ונייקוויסט, נרמול תדרים ומישור <span class="ltr-math text-indigo-300">Z</span>.
+            </p>
+
+            <!-- Feature Highlights Pills -->
+            <div class="flex flex-wrap justify-center gap-2.5 text-xs text-slate-300 mb-9">
+                <span class="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800">📡 הדמיית Aliasing בזמן אמת</span>
+                <span class="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800">🎯 גרירת קטבים ואפסים במישור Z</span>
+                <span class="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800">🧪 חידון בדיקת הבנה</span>
+            </div>
+
+            <!-- Enter Lab CTA Button -->
+            <button onclick="enterLab()" class="group relative inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-l from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:via-blue-500 hover:to-indigo-500 text-white font-extrabold text-base sm:text-lg shadow-xl shadow-cyan-500/25 transition-all duration-300 hover:scale-[1.03] active:scale-[0.99]">
+                <span>כניסה למעבדה — בואו נתחיל</span>
+                <span class="text-xl transition-transform group-hover:-translate-x-1">🚀</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MAIN INTERACTIVE LAB APPLICATION (HIDDEN INITIALLY)       -->
+    <!-- ========================================================= -->
+    <div id="mainApp" class="hidden min-h-screen flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-slate-950/85 backdrop-blur-lg border-b border-slate-800/80">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <!-- Fixed LTR Integral Logo Icon -->
+                <div dir="ltr" class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white font-serif font-bold text-2xl shadow-lg shadow-cyan-500/25 select-none">
+                    <span>∫</span><span class="italic font-sans text-xl ml-0.5">e</span>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-l from-cyan-300 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
+                        מעבדת אותות ומערכות
+                    </h1>
+                    <p class="text-xs text-slate-400">הדמיות ויזואליות: פורייה, דגימה, נייקוויסט, נרמול ומישור Z</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Core Golden Rule Pill -->
+                <div class="hidden lg:flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3.5 py-1.5 rounded-full text-xs">
+                    <span class="text-cyan-400 font-bold">כלל הדואליות:</span>
+                    <span class="text-slate-300">בדיד במישור אחד ⇔ <span class="text-amber-400 font-semibold">מחזורי</span> במישור השני</span>
+                </div>
+
+                <!-- Back to Welcome Page Button -->
+                <button onclick="showLanding()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+                    <span>🏠</span>
+                    <span>דף הבית</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <nav class="max-w-6xl mx-auto px-4 pb-3 overflow-x-auto">
+            <div class="flex gap-2 min-w-max" role="tablist">
+                <button onclick="switchTab('sampling')" id="tab-sampling" class="tab-btn active px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/60 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white flex items-center gap-2">
+                    <span>📡</span> 1. דגימה ו-Aliasing
+                </button>
+                <button onclick="switchTab('scaling')" id="tab-scaling" class="tab-btn px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/60 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white flex items-center gap-2">
+                    <span>📏</span> 2. תדר מנורמל (2π) מול ממשי (ωs)
+                </button>
+                <button onclick="switchTab('zplane')" id="tab-zplane" class="tab-btn px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/60 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white flex items-center gap-2">
+                    <span>🎯</span> 3. מישור Z ומעגל היחידה
+                </button>
+                <button onclick="switchTab('matrix')" id="tab-matrix" class="tab-btn px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/60 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white flex items-center gap-2">
+                    <span>🗺️</span> 4. מטריצת 4 ההתמרות והתמכים
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/60 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white flex items-center gap-2">
+                    <span>🧪</span> 5. חידון הבנה
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: SAMPLING & ALIASING                                -->
+        <!-- ========================================================= -->
+        <section id="panel-sampling" class="tab-panel space-y-6">
+            <div class="glass-card rounded-2xl p-5 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">דגימה בזמן, שכפול ספקטרום ותנאי נייקוויסט</h2>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                            דגימת אות מוגבל-סרט (<span class="ltr-math text-cyan-300">[-W_b, W_b]</span>) במרווחים של <span class="ltr-math text-amber-300">T_s</span> משכפלת את הספקטרום בכל כפולה של <span class="ltr-math text-amber-300">ω_s = 2π/T_s</span>.
+                        </p>
+                    </div>
+                    <div id="nyquistBanner" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all text-center">
+                        בודק תנאי נייקוויסט...
+                    </div>
+                </div>
+
+                <!-- Sliders Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 mb-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs sm:text-sm font-semibold text-slate-200">רוחב סרט האות (<span class="ltr-math text-cyan-400">W_b</span> / תדר מקסימלי):</label>
+                            <span id="wbLabel" class="ltr-math text-sm font-bold text-cyan-400 bg-cyan-950/60 px-2.5 py-0.5 rounded-lg border border-cyan-800/60">4.0 rad/s</span>
+                        </div>
+                        <input type="range" id="wbSlider" min="1.5" max="10" step="0.5" value="4.0" class="w-full">
+                        <p class="text-[11px] text-slate-400 mt-1.5">קובע את גודל התמך של הספקטרום המקורי סביב האפס: <span class="ltr-math">[-W_b, +W_b]</span></p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs sm:text-sm font-semibold text-slate-200">תדר הדגימה הזוויתי (<span class="ltr-math text-amber-400">ω_s = 2π/T_s</span>):</label>
+                            <span id="wsLabel" class="ltr-math text-sm font-bold text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded-lg border border-amber-800/60">11.0 rad/s</span>
+                        </div>
+                        <input type="range" id="wsSlider" min="4" max="24" step="0.5" value="11.0" class="w-full amber-slider">
+                        <p class="text-[11px] text-slate-400 mt-1.5">המרחק בתדר בין מרכזי השכפולים. נייקוויסט דורש: <span id="nyquistReqText" class="ltr-math text-emerald-400 font-semibold">ω_s ≥ 8.0</span></p>
+                    </div>
+                </div>
+
+                <!-- Dual Canvases -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Time Domain -->
+                    <div class="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-300">1. מישור הזמן: האות הרציף והדגמים הבדידים <span class="ltr-math text-amber-400">x[n] = x(nT_s)</span></span>
+                            <span id="tsReadout" class="ltr-math text-[11px] text-slate-400">T_s = 0.57s</span>
+                        </div>
+                        <div class="w-full h-56 relative">
+                            <canvas id="samplingTimeCanvas" class="w-full h-full rounded-lg"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">
+                            הקו המקווקו האדום (כאשר יש Aliasing) מציג את <strong class="text-rose-400">האות המתחזה</strong> בתדר נמוך יותר שעובר דרך אותן נקודות דגימה בדיוק!
+                        </p>
+                    </div>
+
+                    <!-- Frequency Domain -->
+                    <div class="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-300">2. מישור התדר: שכפולים סביב <span class="ltr-math text-amber-400">k·ω_s</span></span>
+                            <span class="ltr-math text-[11px] text-cyan-400">X_s(Ω)</span>
+                        </div>
+                        <div class="w-full h-56 relative">
+                            <canvas id="samplingFreqCanvas" class="w-full h-full rounded-lg"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">
+                            כאשר <span class="ltr-math">ω_s &lt; 2W_b</span>, השכפולים פולשים זה לתוך זה (אזור אדום) ו-LPF אידיאלי כבר לא יכול לשחזר את האות המקורי.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: NORMALIZED (2π) VS REAL FREQUENCY (ω_s)            -->
+        <!-- ========================================================= -->
+        <section id="panel-scaling" class="tab-panel hidden space-y-6">
+            <div class="glass-card rounded-2xl p-5 sm:p-6">
+                <div class="border-b border-slate-800 pb-4 mb-5">
+                    <h2 class="text-xl font-bold text-white">המתיחה הליניארית: תדר מנורמל (<span class="ltr-math text-cyan-400">ω</span>) מול תדר ממשי (<span class="ltr-math text-amber-400">Ω</span>)</h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                        הקשר <span class="ltr-math text-emerald-300 font-bold">ω = Ω · T_s</span> הוא פעולה ליניארית פשוטה (הכפלה בקבוע). המחשב תמיד רואה מחזור של <span class="ltr-math text-cyan-300">2π</span>, בעוד שבמעבדה הציר נמתח לפי <span class="ltr-math text-amber-300">ω_s = 2π / T_s</span>.
+                    </p>
+                </div>
+
+                <!-- Ts Control -->
+                <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <label class="text-sm font-bold text-slate-200">שנה את זמן הדגימה (<span class="ltr-math text-amber-400">T_s</span>):</label>
+                        <div class="flex flex-wrap gap-3 text-xs">
+                            <span id="scaleTsBadge" class="ltr-math bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg text-slate-200">T_s = 0.25 sec</span>
+                            <span id="scaleWsBadge" class="ltr-math bg-amber-950/70 border border-amber-700/60 px-3 py-1 rounded-lg text-amber-300 font-bold">ω_s = 8.0π rad/s</span>
+                        </div>
+                    </div>
+                    <input type="range" id="tsScaleSlider" min="0.1" max="1.0" step="0.05" value="0.25" class="w-full amber-slider">
+                    <div class="flex justify-between text-[11px] text-slate-400 mt-1.5">
+                        <span>דגימה מהירה (<span class="ltr-math">T_s</span> קטן ← <span class="ltr-math">ω_s</span> גדול)</span>
+                        <span>דגימה איטית (<span class="ltr-math">T_s</span> גדול ← <span class="ltr-math">ω_s</span> קטן)</span>
+                    </div>
+                </div>
+
+                <!-- Dual Ruler Canvas -->
+                <div class="bg-slate-950/90 p-4 rounded-xl border border-slate-800 mb-6">
+                    <div class="w-full h-72 relative">
+                        <canvas id="scalingCanvas" class="w-full h-full rounded-lg"></canvas>
+                    </div>
+                </div>
+
+                <!-- Key Mapping Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center">
+                        <div class="text-xs text-slate-400 mb-1">חצי מחזור (גבול נייקוויסט)</div>
+                        <div class="ltr-math text-base font-bold text-cyan-400">ω = π</div>
+                        <div class="text-slate-500 text-xs my-1">⇅ מועתק ליניארית ל-</div>
+                        <div id="mapHalf" class="ltr-math text-base font-bold text-amber-400">Ω = 0.5 · ω_s</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-cyan-800/50 text-center shadow-lg shadow-cyan-950/20">
+                        <div class="text-xs text-cyan-300 mb-1 font-semibold">מחזור שלם אחד</div>
+                        <div class="ltr-math text-base font-bold text-cyan-400">ω = 2π</div>
+                        <div class="text-slate-500 text-xs my-1">⇅ מועתק ליניארית ל-</div>
+                        <div id="mapOne" class="ltr-math text-base font-bold text-amber-400">Ω = 1.0 · ω_s</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center">
+                        <div class="text-xs text-slate-400 mb-1">מחזור וחצי</div>
+                        <div class="ltr-math text-base font-bold text-cyan-400">ω = 3π</div>
+                        <div class="text-slate-500 text-xs my-1">⇅ מועתק ליניארית ל-</div>
+                        <div id="mapOneHalf" class="ltr-math text-base font-bold text-amber-400">Ω = 1.5 · ω_s</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: Z-PLANE & DTFT ON UNIT CIRCLE                      -->
+        <!-- ========================================================= -->
+        <section id="panel-zplane" class="tab-panel hidden space-y-6">
+            <div class="glass-card rounded-2xl p-5 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">מישור <span class="ltr-math text-indigo-400">Z</span> המרוכב ומעגל היחידה (<span class="ltr-math text-cyan-400">|z| = 1</span>)</h2>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                            ה-DTFT הוא פשוט חיתוך של התמרת Z לאורך מעגל היחידה (<span class="ltr-math">z = e^{jω}</span>). סיבוב שלם (<span class="ltr-math">360°</span>) מסביר למה ה-DTFT מחזורי ב-<span class="ltr-math">2π</span>!
+                        </p>
+                    </div>
+                    <div id="rocStatusBadge" class="px-3.5 py-2 rounded-xl text-xs font-bold border bg-emerald-950/60 border-emerald-700/60 text-emerald-300">
+                        ✓ מערכת יציבה: מעגל היחידה בתוך ה-ROC
+                    </div>
+                </div>
+
+                <!-- Interactive Controls / Presets -->
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 mb-6">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400 ml-1">מצבים מוכנים:</span>
+                        <button onclick="setZPreset('lpf')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-cyan-300 border border-slate-700">מסנן LPF (קוטב ליד ω=0)</button>
+                        <button onclick="setZPreset('resonator')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-indigo-300 border border-slate-700">מהוד חד (קוטב קרוב למעגל)</button>
+                        <button onclick="setZPreset('notch')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-300 border border-slate-700">מסנן חוסם תדר (Notch)</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-slate-300 flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="toggleZeroCheck" checked onchange="drawZPlane()" class="accent-cyan-400 w-4 h-4 rounded">
+                            הצג זוג אפסים (O)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Z-Plane + DTFT Magnitude Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left: Z-Plane Canvas (5 cols) -->
+                    <div class="lg:col-span-5 bg-slate-950/90 p-4 rounded-xl border border-slate-800 flex flex-col">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-200">מישור Z (גרור את הקוטב <span class="text-rose-400 font-black">✕</span> או האפס <span class="text-cyan-400 font-black">◯</span>)</span>
+                            <span id="poleCoordsText" class="ltr-math text-[11px] text-rose-400">r=0.80, θ=±45°</span>
+                        </div>
+                        <div class="w-full aspect-square max-h-72 mx-auto relative">
+                            <canvas id="zPlaneCanvas" class="w-full h-full rounded-lg cursor-grab active:cursor-grabbing"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2 text-center">
+                            הקו הכחול המודגש הוא <strong>מעגל היחידה</strong> (<span class="ltr-math">|z|=1</span>). זווית <span class="ltr-math">θ</span> על המעגל היא התדר <span class="ltr-math">ω</span>.
+                        </p>
+                    </div>
+
+                    <!-- Right: Synced DTFT Magnitude (7 cols) -->
+                    <div class="lg:col-span-7 bg-slate-950/90 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-200">תגובת התדר <span class="ltr-math text-cyan-400">|H(e^{jω})|</span> לאורך מעגל היחידה</span>
+                                <span class="ltr-math text-[11px] text-amber-400">מחזוריות 2π מודגשת</span>
+                            </div>
+                            <div class="w-full h-64 relative">
+                                <canvas id="zDtftCanvas" class="w-full h-full rounded-lg"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900/90 p-3 rounded-lg border border-slate-800/80 mt-3 text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-cyan-400">אינטואיציה גיאומטרית:</strong> תחשוב על התמרת Z כיריעה תלת-ממדית מעל המישור. כל קוטב (<span class="text-rose-400 font-bold">✕</span>) מרים את היריעה כמו עמוד אוהל (יוצר <strong>שיא תהודה</strong> בתדר המתאים), וכל אפס (<span class="text-cyan-400 font-bold">◯</span>) מצמיד את היריעה לרצפה (יוצר <strong>שקע/חסימה</strong>). כשמקיפים את המעגל מעבר ל-<span class="ltr-math">π</span> ומגיעים ל-<span class="ltr-math">2π</span>, חוזרים לאותה נקודה בדיוק!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 4: THE 4 TRANSFORMS & SUPPORTS MATRIX                 -->
+        <!-- ========================================================= -->
+        <section id="panel-matrix" class="tab-panel hidden space-y-6">
+            <div class="glass-card rounded-2xl p-5 sm:p-6">
+                <div class="border-b border-slate-800 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-white">מפת 4 התמרות הפורייה וצורת התמך (Support)</h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                        הקשר בין רציפות/בדידות למחזוריות בשני המישורים – כל התמונה במקום אחד.
+                    </p>
+                </div>
+
+                <!-- Responsive Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-800 mb-6">
+                    <table class="w-full text-right text-xs sm:text-sm">
+                        <thead class="bg-slate-900 text-slate-200 border-b border-slate-800">
+                            <tr>
+                                <th class="p-3.5">התמרה</th>
+                                <th class="p-3.5">מישור הזמן</th>
+                                <th class="p-3.5">מישור התדר</th>
+                                <th class="p-3.5">צורת התמך בתדר</th>
+                                <th class="p-3.5">שימוש עיקרי</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/80 bg-slate-950/50">
+                            <tr class="hover:bg-slate-900/60 transition-colors">
+                                <td class="p-3.5 font-bold text-cyan-400">FT<br><span class="text-[11px] font-normal text-slate-400">פורייה רציפה</span></td>
+                                <td class="p-3.5">רציף (<span class="ltr-math">t</span>)<br><span class="text-slate-400 text-xs">לא מחזורי</span></td>
+                                <td class="p-3.5">רציף (<span class="ltr-math">Ω</span>)<br><span class="text-slate-400 text-xs">לא מחזורי</span></td>
+                                <td class="p-3.5"><span class="px-2.5 py-1 rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 text-xs">רציף, ללא שכפולים</span></td>
+                                <td class="p-3.5 text-slate-300 text-xs">אנליזה תיאורטית של אותות אנלוגיים ומערכות LTI רציפות.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-900/60 transition-colors">
+                                <td class="p-3.5 font-bold text-purple-400">FS<br><span class="text-[11px] font-normal text-slate-400">טור פורייה</span></td>
+                                <td class="p-3.5">רציף (<span class="ltr-math">t</span>)<br><span class="text-amber-400 text-xs font-semibold">מחזורי (T)</span></td>
+                                <td class="p-3.5">בדיד (<span class="ltr-math">k·ω₀</span>)<br><span class="text-slate-400 text-xs">לא מחזורי</span></td>
+                                <td class="p-3.5"><span class="px-2.5 py-1 rounded-md bg-purple-950/80 text-purple-300 border border-purple-800/60 text-xs">דחפים בדידים (הרמוניות)</span></td>
+                                <td class="p-3.5 text-slate-300 text-xs">פירוק אות מחזורי לטור. הפעלת FT עליו נותנת דלתאות <span class="ltr-math">2π∑c_k δ(ω-kω₀)</span>.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-900/60 transition-colors">
+                                <td class="p-3.5 font-bold text-emerald-400">DTFT<br><span class="text-[11px] font-normal text-slate-400">זמן בדיד</span></td>
+                                <td class="p-3.5">בדיד (<span class="ltr-math">n</span>)<br><span class="text-slate-400 text-xs">לא מחזורי</span></td>
+                                <td class="p-3.5">רציף (<span class="ltr-math">ω</span>)<br><span class="text-amber-400 text-xs font-semibold">מחזורי (2π / ω_s)</span></td>
+                                <td class="p-3.5"><span class="px-2.5 py-1 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 text-xs">רציף, משוכפל אינסוף פעמים</span></td>
+                                <td class="p-3.5 text-slate-300 text-xs">ניתוח אותות לאחר דגימה, תגובת תדר של מסננים ספרתיים (על מעגל היחידה).</td>
+                            </tr>
+                            <tr class="hover:bg-slate-900/60 transition-colors">
+                                <td class="p-3.5 font-bold text-amber-400">DFT / FFT<br><span class="text-[11px] font-normal text-slate-400">בדידה סופית</span></td>
+                                <td class="p-3.5">בדיד (<span class="ltr-math">n</span>)<br><span class="text-amber-400 text-xs font-semibold">מחזורי (N)</span></td>
+                                <td class="p-3.5">בדיד (<span class="ltr-math">k</span>)<br><span class="text-amber-400 text-xs font-semibold">מחזורי (N)</span></td>
+                                <td class="p-3.5"><span class="px-2.5 py-1 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800/60 text-xs">N נקודות בדידות במעגל</span></td>
+                                <td class="p-3.5 text-slate-300 text-xs">עיבוד אותות במחשב (MATLAB/Python). דגימת DTFT ב-N נקודות אחידות.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 3 Deep Insights Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                        <h3 class="text-sm font-bold text-cyan-400 mb-2">1. עקרון אי-הוודאות (תמך)</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            לא קיים אות בעל תמך סופי גם בזמן וגם בתדר. אות קצר בזמן (פולס צר) מתפרס על תמך רחב בתדר, ואות מוגבל-סרט בתדר משתרע על אינסוף זמן.
+                        </p>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                        <h3 class="text-sm font-bold text-purple-400 mb-2">2. הקשר בין FS ל-FT</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            טור פורייה הוא שוויון במישור הזמן (<span class="ltr-math">∑c_k e^{jkω₀t}</span>). כשמפעילים עליו התמרת פורייה ליניארית, כל אקספוננט הופך לדחף <span class="ltr-math">2πδ(ω - kω₀)</span>.
+                        </p>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                        <h3 class="text-sm font-bold text-emerald-400 mb-2">3. סימטריה הרמיטית</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            עבור כל אות <strong>ממשי</strong> בזמן (<span class="ltr-math">x[n] ∈ ℝ</span>), מתקיים <span class="ltr-math">X(-ω) = X*(ω)</span>: הגודל <span class="ltr-math">|X(ω)|</span> סימטרי זוגי, והפאזה אנטי-סימטרית.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 5: INTERACTIVE QUIZ                                   -->
+        <!-- ========================================================= -->
+        <section id="panel-quiz" class="tab-panel hidden space-y-6">
+            <div class="glass-card rounded-2xl p-5 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">חידון בדיקת הבנה מסכם</h2>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">6 שאלות המכסות את כל הנקודות שדיברנו עליהן. בחר תשובה וקבל הסבר מיידי.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="quizScoreBadge" class="px-4 py-2 rounded-xl bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 font-bold text-sm">
+                            ציון: 0 / 6
+                        </span>
+                        <button onclick="resetQuiz()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700">
+                            איפוס חידון ↺
+                        </button>
+                    </div>
+                </div>
+
+                <div id="quizList" class="space-y-5">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+    </div>
+
+    <script>
+        // =========================================================================
+        // LANDING PAGE <-> MAIN LAB TRANSITION
+        // =========================================================================
+        function enterLab() {
+            document.getElementById('landingPage').classList.add('hidden');
+            const mainApp = document.getElementById('mainApp');
+            mainApp.classList.remove('hidden');
+            mainApp.classList.add('flex');
+            requestAnimationFrame(() => {
+                drawSampling();
+            });
+        }
+
+        function showLanding() {
+            const mainApp = document.getElementById('mainApp');
+            mainApp.classList.add('hidden');
+            mainApp.classList.remove('flex');
+            document.getElementById('landingPage').classList.remove('hidden');
+        }
+
+        // =========================================================================
+        // TAB NAVIGATION
+        // =========================================================================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Resize canvases upon becoming visible
+            requestAnimationFrame(() => {
+                if (tabId === 'sampling') drawSampling();
+                if (tabId === 'scaling') drawScaling();
+                if (tabId === 'zplane') drawZPlane();
+            });
+        }
+
+        function setupHiDPICanvas(canvas) {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            return { ctx, width: rect.width, height: rect.height };
+        }
+
+        // =========================================================================
+        // TAB 1: SAMPLING & ALIASING SIMULATION
+        // =========================================================================
+        const wbSlider = document.getElementById('wbSlider');
+        const wsSlider = document.getElementById('wsSlider');
+
+        function drawSampling() {
+            const Wb = parseFloat(wbSlider.value);
+            const ws = parseFloat(wsSlider.value);
+            const Ts = (2 * Math.PI) / ws;
+            const isAliased = ws < 2 * Wb;
+
+            document.getElementById('wbLabel').textContent = `${Wb.toFixed(1)} rad/s`;
+            document.getElementById('wsLabel').textContent = `${ws.toFixed(1)} rad/s`;
+            document.getElementById('nyquistReqText').textContent = `ω_s ≥ ${(2 * Wb).toFixed(1)}`;
+            document.getElementById('tsReadout').textContent = `T_s = ${Ts.toFixed(2)}s`;
+
+            const banner = document.getElementById('nyquistBanner');
+            if (!isAliased) {
+                banner.className = 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border bg-emerald-950/70 border-emerald-600/60 text-emerald-300 text-center';
+                banner.innerHTML = `✓ עומד בנייקוויסט (<span class="ltr-math">ω_s ≥ 2W_b</span>) — שחזור מושלם אפשרי`;
+            } else {
+                banner.className = 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border bg-rose-950/80 border-rose-500/70 text-rose-300 text-center animate-pulse';
+                banner.innerHTML = `⚠️ קיפול תדרים (Aliasing)! (<span class="ltr-math">ω_s < 2W_b</span>) — השכפולים חופפים`;
+            }
+
+            // --- 1. Time Domain Plot ---
+            const tCanvas = document.getElementById('samplingTimeCanvas');
+            const { ctx: ctxT, width: wT, height: hT } = setupHiDPICanvas(tCanvas);
+            ctxT.clearRect(0, 0, wT, hT);
+
+            const midY = hT / 2;
+            const amp = hT * 0.36;
+            const timeWindow = 3.0; // seconds shown
+
+            // Axis
+            ctxT.strokeStyle = '#1e293b';
+            ctxT.lineWidth = 1;
+            ctxT.beginPath();
+            ctxT.moveTo(0, midY);
+            ctxT.lineTo(wT, midY);
+            ctxT.stroke();
+
+            // Continuous Original Signal cos(Wb * t)
+            ctxT.strokeStyle = '#22d3ee';
+            ctxT.lineWidth = 2.2;
+            ctxT.beginPath();
+            for (let px = 0; px <= wT; px++) {
+                const t = (px / wT) * timeWindow;
+                const y = midY - Math.cos(Wb * t) * amp;
+                if (px === 0) ctxT.moveTo(px, y);
+                else ctxT.lineTo(px, y);
+            }
+            ctxT.stroke();
+
+            // If Aliased, draw the lower-frequency alias ghost wave!
+            if (isAliased) {
+                const wAlias = Math.abs(ws - Wb);
+                ctxT.save();
+                ctxT.setLineDash([5, 5]);
+                ctxT.strokeStyle = '#f43f5e';
+                ctxT.lineWidth = 2;
+                ctxT.beginPath();
+                for (let px = 0; px <= wT; px++) {
+                    const t = (px / wT) * timeWindow;
+                    const y = midY - Math.cos(wAlias * t) * amp;
+                    if (px === 0) ctxT.moveTo(px, y);
+                    else ctxT.lineTo(px, y);
+                }
+                ctxT.stroke();
+                ctxT.restore();
+            }
+
+            // Discrete Samples x[n] = cos(Wb * n * Ts)
+            const maxN = Math.floor(timeWindow / Ts);
+            for (let n = 0; n <= maxN; n++) {
+                const t = n * Ts;
+                const px = (t / timeWindow) * wT;
+                const py = midY - Math.cos(Wb * t) * amp;
+
+                ctxT.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+                ctxT.lineWidth = 1.5;
+                ctxT.beginPath();
+                ctxT.moveTo(px, midY);
+                ctxT.lineTo(px, py);
+                ctxT.stroke();
+
+                ctxT.fillStyle = '#fbbf24';
+                ctxT.beginPath();
+                ctxT.arc(px, py, 4.2, 0, Math.PI * 2);
+                ctxT.fill();
+            }
+
+            // --- 2. Frequency Domain Plot (Triangular Bandlimited Spectrum + Replicas) ---
+            const fCanvas = document.getElementById('samplingFreqCanvas');
+            const { ctx: ctxF, width: wF, height: hF } = setupHiDPICanvas(fCanvas);
+            ctxF.clearRect(0, 0, wF, hF);
+
+            const baseLine = hF - 28;
+            const peakH = hF * 0.62;
+            const centerX = wF / 2;
+            const maxOmegaView = 32; // +/- 32 rad/s
+            const scaleX = (wF / 2) / maxOmegaView;
+
+            // Grid & Axis
+            ctxF.strokeStyle = '#334155';
+            ctxF.lineWidth = 1;
+            ctxF.beginPath();
+            ctxF.moveTo(0, baseLine);
+            ctxF.lineTo(wF, baseLine);
+            ctxF.moveTo(centerX, 10);
+            ctxF.lineTo(centerX, baseLine);
+            ctxF.stroke();
+
+            // Draw Ideal LPF window [-Wb, Wb]
+            ctxF.save();
+            ctxF.setLineDash([4, 4]);
+            ctxF.strokeStyle = 'rgba(52, 211, 153, 0.5)';
+            ctxF.strokeRect(centerX - Wb * scaleX, baseLine - peakH - 8, 2 * Wb * scaleX, peakH + 8);
+            ctxF.restore();
+
+            // Draw Replicas k = -3 .. +3
+            for (let k = -3; k <= 3; k++) {
+                const cOmega = k * ws;
+                const xCenter = centerX + cOmega * scaleX;
+                const xLeft = centerX + (cOmega - Wb) * scaleX;
+                const xRight = centerX + (cOmega + Wb) * scaleX;
+
+                const isBase = (k === 0);
+                ctxF.fillStyle = isBase
+                    ? 'rgba(34, 211, 238, 0.28)'
+                    : (isAliased ? 'rgba(244, 63, 94, 0.25)' : 'rgba(129, 140, 248, 0.2)');
+                ctxF.strokeStyle = isBase
+                    ? '#22d3ee'
+                    : (isAliased ? '#f43f5e' : '#818cf8');
+                ctxF.lineWidth = 2;
+
+                ctxF.beginPath();
+                ctxF.moveTo(xLeft, baseLine);
+                ctxF.lineTo(xCenter, baseLine - peakH);
+                ctxF.lineTo(xRight, baseLine);
+                ctxF.closePath();
+                ctxF.fill();
+                ctxF.stroke();
+
+                // Label k*ws
+                if (xCenter > 15 && xCenter < wF - 15) {
+                    ctxF.fillStyle = isBase ? '#67e8f9' : '#fbbf24';
+                    ctxF.font = '600 10px JetBrains Mono';
+                    ctxF.textAlign = 'center';
+                    const lbl = k === 0 ? '0' : (k === 1 ? 'ωs' : (k === -1 ? '-ωs' : `${k}ωs`));
+                    ctxF.fillText(lbl, xCenter, baseLine + 14);
+                }
+            }
+        }
+
+        wbSlider.addEventListener('input', drawSampling);
+        wsSlider.addEventListener('input', drawSampling);
+
+        // =========================================================================
+        // TAB 2: NORMALIZED (2π) VS REAL (ω_s) SCALING
+        // =========================================================================
+        const tsScaleSlider = document.getElementById('tsScaleSlider');
+
+        function drawScaling() {
+            const Ts = parseFloat(tsScaleSlider.value);
+            const wsInPi = 2 / Ts; // since ws = 2π / Ts
+
+            document.getElementById('scaleTsBadge').textContent = `T_s = ${Ts.toFixed(2)} sec`;
+            document.getElementById('scaleWsBadge').textContent = `ω_s = ${wsInPi.toFixed(1)}π rad/s`;
+
+            document.getElementById('mapHalf').textContent = `Ω = ${(0.5 * wsInPi).toFixed(1)}π (0.5·ω_s)`;
+            document.getElementById('mapOne').textContent = `Ω = ${(1.0 * wsInPi).toFixed(1)}π (1.0·ω_s)`;
+            document.getElementById('mapOneHalf').textContent = `Ω = ${(1.5 * wsInPi).toFixed(1)}π (1.5·ω_s)`;
+
+            const canvas = document.getElementById('scalingCanvas');
+            const { ctx, width, height } = setupHiDPICanvas(canvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const padX = 45;
+            const usableW = width - padX * 2;
+            const topY = 65;
+            const botY = height - 65;
+
+            // Top Axis: Normalized Frequency ω (fixed 0 to 4π)
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(padX, topY);
+            ctx.lineTo(padX + usableW, topY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#67e8f9';
+            ctx.font = 'bold 12px Heebo';
+            ctx.textAlign = 'right';
+            ctx.fillText('ציר תדר מנורמל ω (קבוע במחשב - מחזור תמיד 2π):', padX + usableW, topY - 32);
+
+            // Bottom Axis: Real Frequency Ω (scales dynamically up to 40π)
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(padX, botY);
+            ctx.lineTo(padX + usableW, botY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#fcd34d';
+            ctx.fillText('ציר תדר ממשי Ω [rad/sec] (נמתח ליניארית לפי ω_s = 2π/T_s):', padX + usableW, botY + 46);
+
+            // Draw periodic spectrum lobes on Top Axis (0, 2π, 4π)
+            const normMarks = [0, 1, 2, 3, 4]; // in units of π
+            const maxRealPi = 22; // max displayable on bottom ruler in units of π
+
+            normMarks.forEach(m => {
+                const xTop = padX + (m / 4) * usableW;
+                const realPiVal = m * (wsInPi / 2); // since 2π -> wsInPi*π
+                const xBot = padX + Math.min(1.05, realPiVal / maxRealPi) * usableW;
+
+                // Connecting dashed projection line
+                ctx.save();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = m === 2 ? '#34d399' : 'rgba(148, 163, 184, 0.35)';
+                ctx.lineWidth = m === 2 ? 2 : 1;
+                ctx.beginPath();
+                ctx.moveTo(xTop, topY);
+                ctx.lineTo(xBot, botY);
+                ctx.stroke();
+                ctx.restore();
+
+                // Top tick
+                ctx.fillStyle = '#22d3ee';
+                ctx.beginPath();
+                ctx.arc(xTop, topY, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = '600 11px JetBrains Mono';
+                ctx.textAlign = 'center';
+                const topLabel = m === 0 ? '0' : (m === 1 ? 'π' : `${m}π`);
+                ctx.fillText(topLabel, xTop, topY - 12);
+
+                // Bottom tick (if in bounds)
+                if (realPiVal <= maxRealPi) {
+                    ctx.fillStyle = m === 2 ? '#34d399' : '#fbbf24';
+                    ctx.beginPath();
+                    ctx.arc(xBot, botY, 4.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    const wsRatio = (m / 2).toFixed(1).replace('.0', '');
+                    const botLabel = m === 0 ? '0' : `${wsRatio}ωs (${realPiVal.toFixed(1)}π)`;
+                    ctx.fillText(botLabel, xBot, botY + 20);
+                }
+            });
+
+            // Highlight one period bracket on both axes (0 to 2π vs 0 to ω_s)
+            const x2Pi = padX + (2 / 4) * usableW;
+            const xWs = padX + Math.min(1, wsInPi / maxRealPi) * usableW;
+
+            ctx.fillStyle = 'rgba(52, 211, 153, 0.12)';
+            ctx.beginPath();
+            ctx.moveTo(padX, topY);
+            ctx.lineTo(x2Pi, topY);
+            ctx.lineTo(xWs, botY);
+            ctx.lineTo(padX, botY);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        tsScaleSlider.addEventListener('input', drawScaling);
+
+        // =========================================================================
+        // TAB 3: Z-PLANE & UNIT CIRCLE DTFT EXPLORER
+        // =========================================================================
+        let poleState = { r: 0.78, theta: Math.PI / 4 };
+        let zeroState = { r: 0.95, theta: (3 * Math.PI) / 4 };
+        let draggingTarget = null; // 'pole' or 'zero'
+
+        const zCanvas = document.getElementById('zPlaneCanvas');
+
+        function setZPreset(type) {
+            if (type === 'lpf') {
+                poleState = { r: 0.75, theta: 0.18 };
+                zeroState = { r: 1.0, theta: Math.PI };
+                document.getElementById('toggleZeroCheck').checked = true;
+            } else if (type === 'resonator') {
+                poleState = { r: 0.92, theta: Math.PI / 3 };
+                zeroState = { r: 0.0, theta: 0 };
+                document.getElementById('toggleZeroCheck').checked = false;
+            } else if (type === 'notch') {
+                poleState = { r: 0.82, theta: Math.PI / 2 };
+                zeroState = { r: 1.0, theta: Math.PI / 2 };
+                document.getElementById('toggleZeroCheck').checked = true;
+            }
+            drawZPlane();
+        }
+
+        function getZCanvasMetrics() {
+            const rect = zCanvas.parentElement.getBoundingClientRect();
+            const cx = rect.width / 2;
+            const cy = rect.height / 2;
+            const unitR = Math.min(cx, cy) * 0.68;
+            return { cx, cy, unitR, width: rect.width, height: rect.height };
+        }
+
+        function handleZPointerDown(e) {
+            const rect = zCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const mx = clientX - rect.left;
+            const my = clientY - rect.top;
+
+            const { cx, cy, unitR } = getZCanvasMetrics();
+            const px = cx + poleState.r * unitR * Math.cos(poleState.theta);
+            const pyTop = cy - poleState.r * unitR * Math.sin(poleState.theta);
+            const pyBot = cy + poleState.r * unitR * Math.sin(poleState.theta);
+
+            const distPole = Math.min(Math.hypot(mx - px, my - pyTop), Math.hypot(mx - px, my - pyBot));
+            if (distPole < 24) {
+                draggingTarget = 'pole';
+                return;
+            }
+
+            if (document.getElementById('toggleZeroCheck').checked) {
+                const zx = cx + zeroState.r * unitR * Math.cos(zeroState.theta);
+                const zyTop = cy - zeroState.r * unitR * Math.sin(zeroState.theta);
+                const zyBot = cy + zeroState.r * unitR * Math.sin(zeroState.theta);
+                const distZero = Math.min(Math.hypot(mx - zx, my - zyTop), Math.hypot(mx - zx, my - zyBot));
+                if (distZero < 24) {
+                    draggingTarget = 'zero';
+                }
+            }
+        }
+
+        function handleZPointerMove(e) {
+            if (!draggingTarget) return;
+            e.preventDefault();
+            const rect = zCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const mx = clientX - rect.left;
+            const my = clientY - rect.top;
+
+            const { cx, cy, unitR } = getZCanvasMetrics();
+            const dx = (mx - cx) / unitR;
+            const dy = -(my - cy) / unitR;
+
+            const r = Math.min(1.35, Math.hypot(dx, dy));
+            const theta = Math.abs(Math.atan2(dy, dx));
+
+            if (draggingTarget === 'pole') {
+                poleState = { r, theta };
+            } else if (draggingTarget === 'zero') {
+                zeroState = { r, theta };
+            }
+            drawZPlane();
+        }
+
+        function handleZPointerUp() {
+            draggingTarget = null;
+        }
+
+        zCanvas.addEventListener('mousedown', handleZPointerDown);
+        window.addEventListener('mousemove', handleZPointerMove);
+        window.addEventListener('mouseup', handleZPointerUp);
+        zCanvas.addEventListener('touchstart', handleZPointerDown, { passive: false });
+        window.addEventListener('touchmove', handleZPointerMove, { passive: false });
+        window.addEventListener('touchend', handleZPointerUp);
+
+        function drawZPlane() {
+            const { ctx, width, height } = setupHiDPICanvas(zCanvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2;
+            const unitR = Math.min(cx, cy) * 0.68;
+
+            // Update ROC & Coords badges
+            const deg = Math.round((poleState.theta * 180) / Math.PI);
+            document.getElementById('poleCoordsText').textContent = `r=${poleState.r.toFixed(2)}, θ=±${deg}°`;
+
+            const rocBadge = document.getElementById('rocStatusBadge');
+            if (poleState.r < 1.0) {
+                rocBadge.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border bg-emerald-950/60 border-emerald-700/60 text-emerald-300';
+                rocBadge.textContent = '✓ מערכת יציבה: מעגל היחידה בתוך ה-ROC (DTFT מתכנס)';
+            } else {
+                rocBadge.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border bg-rose-950/70 border-rose-600/70 text-rose-300';
+                rocBadge.textContent = '⚠️ קוטב על/מחוץ למעגל היחידה (|z| ≥ 1) — מערכת לא יציבה!';
+            }
+
+            // Shaded ROC (|z| > poleState.r for causal system)
+            ctx.fillStyle = poleState.r < 1 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#090d16';
+            ctx.beginPath();
+            ctx.arc(cx, cy, poleState.r * unitR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Axes
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(10, cy);
+            ctx.lineTo(width - 10, cy);
+            ctx.moveTo(cx, 10);
+            ctx.lineTo(cx, height - 10);
+            ctx.stroke();
+
+            // Unit Circle (|z| = 1)
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(cx, cy, unitR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Labels on Unit Circle
+            ctx.fillStyle = '#67e8f9';
+            ctx.font = '600 10px JetBrains Mono';
+            ctx.fillText('ω=0 (2π)', cx + unitR + 6, cy - 5);
+            ctx.fillText('ω=π', cx - unitR - 26, cy - 5);
+            ctx.fillText('π/2', cx + 5, cy - unitR - 6);
+
+            // Draw Poles (X)
+            const px = cx + poleState.r * unitR * Math.cos(poleState.theta);
+            const py1 = cy - poleState.r * unitR * Math.sin(poleState.theta);
+            const py2 = cy + poleState.r * unitR * Math.sin(poleState.theta);
+
+            ctx.strokeStyle = '#fb7185';
+            ctx.lineWidth = 2.8;
+            [py1, py2].forEach(py => {
+                ctx.beginPath();
+                ctx.moveTo(px - 6, py - 6);
+                ctx.lineTo(px + 6, py + 6);
+                ctx.moveTo(px + 6, py - 6);
+                ctx.lineTo(px - 6, py + 6);
+                ctx.stroke();
+            });
+
+            // Draw Zeros (O) if enabled
+            const useZero = document.getElementById('toggleZeroCheck').checked;
+            if (useZero) {
+                const zx = cx + zeroState.r * unitR * Math.cos(zeroState.theta);
+                const zy1 = cy - zeroState.r * unitR * Math.sin(zeroState.theta);
+                const zy2 = cy + zeroState.r * unitR * Math.sin(zeroState.theta);
+
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2.5;
+                [zy1, zy2].forEach(zy => {
+                    ctx.beginPath();
+                    ctx.arc(zx, zy, 6.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+            }
+
+            // --- Draw Synced DTFT Magnitude Plot (-π to 3π) ---
+            const dCanvas = document.getElementById('zDtftCanvas');
+            const { ctx: ctxD, width: wD, height: hD } = setupHiDPICanvas(dCanvas);
+            ctxD.clearRect(0, 0, wD, hD);
+
+            const baseD = hD - 28;
+            const minW = -Math.PI;
+            const maxW = 3 * Math.PI; // shows 2 full 2π cycles!
+
+            // Highlight fundamental cycle [-π, π] vs repeated cycle [π, 3π]
+            const xNegPi = 0;
+            const xPosPi = wD * 0.5;
+            ctxD.fillStyle = 'rgba(34, 211, 238, 0.06)';
+            ctxD.fillRect(xNegPi, 10, xPosPi, baseD - 10);
+
+            ctxD.fillStyle = 'rgba(251, 191, 36, 0.05)';
+            ctxD.fillRect(xPosPi, 10, wD - xPosPi, baseD - 10);
+
+            // Grid lines at -π, 0, π, 2π, 3π
+            const ticks = [
+                { w: -Math.PI, lbl: '-π' },
+                { w: 0, lbl: '0' },
+                { w: Math.PI, lbl: 'π' },
+                { w: 2 * Math.PI, lbl: '2π' },
+                { w: 3 * Math.PI, lbl: '3π' }
+            ];
+
+            ctxD.strokeStyle = '#334155';
+            ctxD.lineWidth = 1;
+            ctxD.beginPath();
+            ctxD.moveTo(0, baseD);
+            ctxD.lineTo(wD, baseD);
+            ctxD.stroke();
+
+            ticks.forEach(t => {
+                const tx = ((t.w - minW) / (maxW - minW)) * wD;
+                ctxD.save();
+                ctxD.setLineDash([3, 3]);
+                ctxD.strokeStyle = t.w === 0 || t.w === 2 * Math.PI ? '#fbbf24' : '#334155';
+                ctxD.beginPath();
+                ctxD.moveTo(tx, 10);
+                ctxD.lineTo(tx, baseD);
+                ctxD.stroke();
+                ctxD.restore();
+
+                ctxD.fillStyle = '#94a3b8';
+                ctxD.font = '600 10px JetBrains Mono';
+                ctxD.textAlign = 'center';
+                ctxD.fillText(t.lbl, tx, baseD + 15);
+            });
+
+            // Compute |H(e^{jω})| = |num| / |den|
+            const p1x = poleState.r * Math.cos(poleState.theta);
+            const p1y = poleState.r * Math.sin(poleState.theta);
+            const z1x = zeroState.r * Math.cos(zeroState.theta);
+            const z1y = zeroState.r * Math.sin(zeroState.theta);
+
+            const mags = [];
+            let maxMag = 0.01;
+            const steps = 260;
+
+            for (let i = 0; i <= steps; i++) {
+                const w = minW + (i / steps) * (maxW - minW);
+                const ux = Math.cos(w);
+                const uy = Math.sin(w);
+
+                const dPole1 = Math.hypot(ux - p1x, uy - p1y);
+                const dPole2 = Math.hypot(ux - p1x, uy + p1y);
+                const den = Math.max(0.06, dPole1 * dPole2);
+
+                let num = 1.0;
+                if (useZero) {
+                    const dZero1 = Math.hypot(ux - z1x, uy - z1y);
+                    const dZero2 = Math.hypot(ux - z1x, uy + z1y);
+                    num = dZero1 * dZero2;
+                }
+
+                const mag = num / den;
+                mags.push(mag);
+                if (mag > maxMag) maxMag = mag;
+            }
+
+            // Draw Frequency Response Curve
+            ctxD.strokeStyle = '#22d3ee';
+            ctxD.lineWidth = 2.5;
+            ctxD.beginPath();
+            for (let i = 0; i <= steps; i++) {
+                const px = (i / steps) * wD;
+                const normH = mags[i] / maxMag;
+                const py = baseD - normH * (baseD - 22);
+                if (i === 0) ctxD.moveTo(px, py);
+                else ctxD.lineTo(px, py);
+            }
+            ctxD.stroke();
+        }
+
+        // =========================================================================
+        // TAB 5: INTERACTIVE QUIZ
+        // =========================================================================
+        const quizData = [
+            {
+                q: "למה התמרת DTFT תמיד מחזורית ב-2π במישור התדר המנורמל ω?",
+                options: [
+                    "כי האות בזמן הוא רציף ואינסופי",
+                    "כי האינדקס n בזמן הוא מספר שלם, ולכן e^{j(ω+2π)n} = e^{jωn}·1 (סיבוב שלם במעגל היחידה)",
+                    "כי תמיד דוגמים בתדר של 2π הרצ",
+                    "רק כאשר האות בזמן הוא סימטרי זוגי"
+                ],
+                correct: 1,
+                explanation: "מכיוון שבדיסקרטי n הוא שלם, הוספת 2π לזווית ω שקולה להקפה שלמה של מעגל היחידה (360°) במישור Z וחזרה לאותה נקודה בדיוק."
+            },
+            {
+                q: "המעבר מהתדר המנורמל ω לתדר הממשי Ω דרך ω = Ω·T_s הוא פעולה ליניארית. לאן מועתקת הנקודה ω = 3π?",
+                options: [
+                    "לנקודה Ω = 3·ω_s",
+                    "לנקודה Ω = 1.5·ω_s (מחזור וחצי)",
+                    "לנקודה Ω = 0.5·ω_s",
+                    "היא נשארת ב-3π ללא שינוי"
+                ],
+                correct: 1,
+                explanation: "מכיוון ש-2π מועתק ליניארית למחזור אחד שלם ω_s, הנקודה 3π (שהיא פי 1.5 מ-2π) מועתקת ל-1.5·ω_s."
+            },
+            {
+                q: "נתון אות רציף מוגבל-סרט בתחום [-W_b, W_b]. מה קורה לספקטרום בתדר אם מגדילים את זמן הדגימה T_s (דוגמים לאט יותר)?",
+                options: [
+                    "השכפולים בתדר מתרחקים זה מזה (ω_s גדל)",
+                    "השכפולים בתדר מתקרבים זה לזה (ω_s = 2π/T_s קטן), ועלול להיווצר Aliasing",
+                    "התמך בזמן הופך לסופי",
+                    "אין שום שינוי במישור התדר"
+                ],
+                correct: 1,
+                explanation: "תדר הדגימה הוא ω_s = 2π/T_s. הגדלת T_s מקטינה את ω_s, מה שמקרב את העתקי הספקטרום זה לזה."
+            },
+            {
+                q: "איך מתקבל גרף ה-DTFT מתוך התמרת Z במישור המרוכב?",
+                options: [
+                    "על ידי הצבת z = 0",
+                    "על ידי הערכת התמרת Z לאורך מעגל היחידה (z = e^{jω}), בתנאי שמעגל היחידה בתוך ה-ROC",
+                    "על ידי לקיחת החלק הממשי של הקטבים בלבד",
+                    "התמרת Z אינה קשורה ל-DTFT"
+                ],
+                correct: 1,
+                explanation: "ה-DTFT היא מקרה פרטי של התמרת Z עבור רדיוס r = 1, כלומר על היקף מעגל היחידה."
+            },
+            {
+                q: "מה קורה כאשר מפעילים התמרת פורייה רציפה (FT) על אות מחזורי המיוצג כטור פורייה (FS)?",
+                options: [
+                    "מתקבל ספקטרום רציף חלק ללא קפיצות",
+                    "מתקבלת רכבת של דחפי דיראק בתדרים ההרמוניים k·ω₀, שמשקלם נקבע ע״י מקדמי הטור c_k",
+                    "התמרת הפורייה מתאפסת בכל התדרים",
+                    "האות הופך לבדיד בזמן"
+                ],
+                correct: 1,
+                explanation: "בזכות הליניאריות, התמרת פורייה של כל איבר c_k·e^{jkω₀t} בטור נותנת דחף בתדר: 2π·c_k·δ(ω - kω₀)."
+            },
+            {
+                q: "אם אות בזמן x[n] הוא ממשי לחלוטין (x[n] ∈ ℝ), מה ניתן לומר בוודאות על התמרת ה-DTFT שלו?",
+                options: [
+                    "היא חייבת להיות ממשית גם כן",
+                    "היא מקיימת סימטריה הרמיטית: |X(-ω)| = |X(ω)| (גודל זוגי ופאזה אי-זוגית)",
+                    "התמך שלה חייב להיות סופי",
+                    "אין לה חלק מדומיין"
+                ],
+                correct: 1,
+                explanation: "עבור אות ממשי בזמן מתקיים X(-ω) = X*(ω), ולכן גרף האמפליטודה |X(ω)| הוא תמונת ראי סימטרית סביב 0."
+            }
+        ];
+
+        let quizScore = 0;
+        let answeredFlags = new Array(quizData.length).fill(false);
+
+        function renderQuiz() {
+            const list = document.getElementById('quizList');
+            list.innerHTML = quizData.map((item, qIdx) => `
+                <div class="bg-slate-900/75 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+                    <div class="font-bold text-sm sm:text-base text-slate-100">
+                        <span class="text-cyan-400 ml-1.5">${qIdx + 1}.</span>${item.q}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        ${item.options.map((opt, oIdx) => `
+                            <button onclick="selectQuizOption(${qIdx}, ${oIdx})" id="qopt-${qIdx}-${oIdx}"
+                                class="text-right text-xs sm:text-sm p-3 rounded-xl border border-slate-800 bg-slate-950/70 hover:bg-slate-800/80 text-slate-300 transition-all">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div id="qexp-${qIdx}" class="hidden text-xs sm:text-sm p-3.5 rounded-xl leading-relaxed"></div>
+                </div>
+            `).join('');
+        }
+
+        function selectQuizOption(qIdx, oIdx) {
+            if (answeredFlags[qIdx]) return;
+            answeredFlags[qIdx] = true;
+
+            const item = quizData[qIdx];
+            const chosenBtn = document.getElementById(`qopt-${qIdx}-${oIdx}`);
+            const correctBtn = document.getElementById(`qopt-${qIdx}-${item.correct}`);
+            const expBox = document.getElementById(`qexp-${qIdx}`);
+
+            if (oIdx === item.correct) {
+                quizScore++;
+                chosenBtn.className = "text-right text-xs sm:text-sm p-3 rounded-xl border border-emerald-500 bg-emerald-950/70 text-emerald-200 font-bold";
+                expBox.className = "text-xs sm:text-sm p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-700/60 text-emerald-300";
+                expBox.innerHTML = `<strong>✓ מדויק!</strong> ${item.explanation}`;
+            } else {
+                chosenBtn.className = "text-right text-xs sm:text-sm p-3 rounded-xl border border-rose-500 bg-rose-950/70 text-rose-200 font-bold";
+                correctBtn.className = "text-right text-xs sm:text-sm p-3 rounded-xl border border-emerald-500 bg-emerald-950/60 text-emerald-200 font-bold";
+                expBox.className = "text-xs sm:text-sm p-3.5 rounded-xl bg-rose-950/50 border border-rose-700/60 text-rose-200";
+                expBox.innerHTML = `<strong>✗ לא מדויק.</strong> ${item.explanation}`;
+            }
+
+            expBox.classList.remove('hidden');
+            document.getElementById('quizScoreBadge').textContent = `ציון: ${quizScore} / ${quizData.length}`;
+        }
+
+        function resetQuiz() {
+            quizScore = 0;
+            answeredFlags = new Array(quizData.length).fill(false);
+            document.getElementById('quizScoreBadge').textContent = `ציון: 0 / ${quizData.length}`;
+            renderQuiz();
+        }
+
+        // =========================================================================
+        // INITIALIZATION & RESIZE HANDLING
+        // =========================================================================
+        window.addEventListener('resize', () => {
+            drawSampling();
+            drawScaling();
+            drawZPlane();
+        });
+
+        window.onload = () => {
+            renderQuiz();
+            drawSampling();
+        };
+    </script>
+</body>
+</html>
